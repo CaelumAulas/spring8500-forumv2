@@ -1,5 +1,13 @@
 package br.com.alura.forum.security.configuration;
 
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,8 +20,12 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import br.com.alura.forum.security.AuthenticationFilter;
 import br.com.alura.forum.security.service.UserService;
 
 @EnableWebSecurity
@@ -21,6 +33,8 @@ import br.com.alura.forum.security.service.UserService;
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private UserService userService;
+	@Autowired
+	private AuthenticationFilter authFilter;
 	
 	@Bean(BeanIds.AUTHENTICATION_MANAGER)
 	@Override
@@ -46,7 +60,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		.and()
 			.csrf().disable()
 			.sessionManagement()
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+				.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+			.and()
+				.addFilterBefore(authFilter, 
+						UsernamePasswordAuthenticationFilter.class)
+					.exceptionHandling()
+					.authenticationEntryPoint(new JwtAuthEntryPoint());
 	}
 	
 	@Override
@@ -54,5 +73,20 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		web.ignoring().antMatchers("/**.html",  "/v2/api-docs", 
                 "/webjars/**", "/configuration/**", 
                 "/swagger-resources/**");
+	}
+	
+
+	private class JwtAuthEntryPoint implements AuthenticationEntryPoint {
+		private Logger logger = LoggerFactory
+				.getLogger(JwtAuthEntryPoint.class);
+
+		@Override
+		public void commence(HttpServletRequest request, HttpServletResponse response,
+				AuthenticationException authException) throws IOException, ServletException {
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Seu token está inválido");
+			logger.error("O token está inválido " + authException.getMessage());
+			authException.printStackTrace();
+		}
+		
 	}
 }

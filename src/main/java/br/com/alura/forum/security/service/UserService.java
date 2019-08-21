@@ -23,7 +23,14 @@ public class UserService implements UserDetailsService {
 		return possibleUser.orElseThrow(() -> 
 				new UsernameNotFoundException("Erro na autenticação,"
 					+ " usuário não encontrado com email"));
-		
+	}
+
+	public UserDetails loadUserById(Long userId) {
+		Optional<User> possibleUser = userRepository.findById(userId);
+
+		return possibleUser.orElseThrow(() -> 
+				new UsernameNotFoundException("Erro na autenticação,"
+					+ " usuário não encontrado com id"));
 	}
 
 }
