@@ -84,21 +84,7 @@ public class TopicController {
 		return ResponseEntity.created(location).body(topicOutputDto);
     }
     
-    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ValidationErrorsOutputDto handleArgumentNotValidException(MethodArgumentNotValidException e) {
-    	ValidationErrorsOutputDto validationErrorsOutputDto = new ValidationErrorsOutputDto();
-    	
-    	BindingResult bindingResult = e.getBindingResult();
-    	List<FieldError> fieldErrors = bindingResult.getFieldErrors();
-    	
-    	fieldErrors.forEach(fieldError ->
-    		validationErrorsOutputDto.addFieldErrorDto(fieldError.getField(),
-    			fieldError.getDefaultMessage())
-    	);
-    	
-    	return validationErrorsOutputDto;
-    }
+
     
     
     
